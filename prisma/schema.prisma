@@ -11,10 +11,14 @@ datasource db {
 }
 
 model User {
-  id    Int     @id @default(autoincrement())
-  name  String  @unique
-  password  String
-  email String  @unique
+  id            Int       @id @default(autoincrement())
+  name          String    @unique
+  email         String    @unique
+  password      String
+  last_session  DateTime  @updatedAt
+  update_at     DateTime  @updatedAt
+  date_born     DateTime  @default(now())
+  playlist      Playlist[]
 }
 
 model Playlist {
