@@ -11,19 +11,46 @@ datasource db {
 }
 
 model User {
-  id            Int       @id @default(autoincrement())
-  name          String    @unique
-  email         String    @unique
-  password      String
-  last_session  DateTime  @updatedAt
-  update_at     DateTime  @updatedAt
-  date_born     DateTime  @default(now())
-  playlist      Playlist[]
+  id           Int        @id @default(autoincrement())
+  name         String     @unique
+  email        String     @unique
+  password     String
+  last_session DateTime   @updatedAt
+  update_at    DateTime   @updatedAt
+  date_born    DateTime
+  playlist     Playlist[]
 }
 
 model Playlist {
-  id        Int     @id @default(autoincrement())
-  title     String
-  User_id   User    @relation(fields: [], references: [id])
+  id           Int            @id @default(autoincrement())
+  title        String
+  userid       User           @relation(fields: [user_id], references: [id])
+  user_id      Int
+  playlistsong PlaylistSong[]
+  song         Song[]
+}
 
+model Song {
+  id            Int            @id @default(autoincrement())
+  name          String
+  artist        String
+  album         String
+  year          Int
+  genre         String
+  duration      Int
+  playlist      Playlist       @relation(fields: [playlistId], references: [id])
+  playlistId    Int
+  privacy       Boolean        @default(false)
+  playlistsongs PlaylistSong[]
+}
+
+model PlaylistSong {
+  id_songs    Int
+  id_playlist Int
+  song        Song     @relation(fields: [song_id], references: [id])
+  song_id     Int
+  playlist    Playlist @relation(fields: [playlist_id], references: [id])
+  playlist_id Int
+  @@unique([id_songs])
+  @@unique([id_playlist])
 }
