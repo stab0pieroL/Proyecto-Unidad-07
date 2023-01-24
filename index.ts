@@ -49,6 +49,53 @@ app.post('api/v1/users/login', async (req, res) => {
   }
 });
 
+//Crear canciones
+
+app.post("/api/v1/songs", async (req, res) => {
+  try {
+    const { name, artist, album, year, genre, duration, privacy } = req.body;
+
+    const song = await prisma.song.create({
+      data: {
+        name,
+        artist,
+        album,
+        year,
+        genre,
+        duration,
+        privacy
+      },
+    });
+
+    return res.json(song);
+  } catch (error) {
+    return res.status(500).json({ error: "Error" });
+  }
+});
+
+//Obtener lista de  las canciones agregadas
+
+app.get("/songs", async (req, res) => {
+  const songs = await prisma.song.findMany();
+  res.json(songs);
+});
+
+//Obtener canción por id
+
+app.get("/songs/:id", async (req, res) => {
+  const { id } = req.params;
+  const song = await prisma.song.findOne({
+    where: {
+      id,
+    },
+  });
+  if (!song) {
+    return res.status(404).json({ error: "Song not found" });
+  }
+  res.json(song);
+});
+
+
 //Creación de playlists
 
 app.post("/api/v1/playlists", async (req, res) => {
@@ -113,51 +160,6 @@ app.post("api/v1/playlists/:id/songs", async (req, res) => {
   }
 });
 
-//Crear canciones
-
-app.post("/api/v1/songs", async (req, res) => {
-  try {
-    const { name, artist, album, year, genre, duration, privacy } = req.body;
-
-    const song = await prisma.song.create({
-      data: {
-        name,
-        artist,
-        album,
-        year,
-        genre,
-        duration,
-        privacy
-      },
-    });
-
-    return res.json(song);
-  } catch (error) {
-    return res.status(500).json({ error: "Error" });
-  }
-});
-
-//Obtener lista de  las canciones agregadas
-
-app.get("/songs", async (req, res) => {
-  const songs = await prisma.song.findMany();
-  res.json(songs);
-});
-
-//Obtener canción por id
-
-app.get("/songs/:id", async (req, res) => {
-  const { id } = req.params;
-  const song = await prisma.song.findOne({
-    where: {
-      id,
-    },
-  });
-  if (!song) {
-    return res.status(404).json({ error: "Song not found" });
-  }
-  res.json(song);
-});
 
 app.listen(port, () => {
   console.log(`El servidor se ejecuta en http://localhost:${port}`);
