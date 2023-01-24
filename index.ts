@@ -19,13 +19,15 @@ app.use(express.json());
 
 app.post('/api/v1/users/', async (req, res) => {
 
-  const { name, email, password, date_born } = req.body;
+  const { name, email, password, date_born, last_session, update_at } = req.body;
   const user = await prisma.user.create({
     data: {
       name: name,
       email: email,
       password: password,
       date_born: new Date(date_born),
+      last_session: new Date(last_session),
+      update_at:new Date(update_at)
     },
   })
   res.json(user);
