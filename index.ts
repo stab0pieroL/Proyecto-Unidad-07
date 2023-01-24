@@ -1,47 +1,62 @@
-import express, { Express, Request, Response } from 'express';
+import express, { Express, NextFunction, Request, Response } from 'express';
 import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
 import jwt from "jsonwebtoken";
 import bcrypt from 'bcrypt';
-const SECRET_KEY = "mysecretkey";
+import { validateAuthorization } from "./middleware.js";
 
 dotenv.config();
 const app: Express = express();
 const prisma = new PrismaClient()
-const port = process.env.PORT;
-
-
+const port = process.env.PORT || 3000;
 
 app.use(express.json());
 
+app.get("/", validateAuthorization, async (req, res) => {
+  const users = await prisma.user.findMany();
+
+  return res.json(users);
+});
 
 //creacion de usuario
 
 app.post('/api/v1/users/', async (req, res) => {
 
-  const { name, email, password, date_born, last_session, update_at } = req.body;
-  const user = await prisma.user.create({
-    data: {
-      name: name,
-      email: email,
-      password: password,
-      date_born: new Date(date_born),
-      last_session: new Date(last_session),
-      update_at:new Date(update_at)
-    },
-  })
-  res.json(user);
+  const username = req.body.name;
+  const token = jwt.sign({ name: username }, process.env.TOKEN_SECRET, {
+    expiresIn: "1800s",
+  });
+  res.status(201).json({ token: token });
 });
+
+
+function authenticateToken(req: Request, res:Response, next:NextFunction) {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+
+  if (token == null) return res.sendStatus(401);
+
+  jwt.verify(token, process.env.TOKEN_SECRET, (err, user) => {
+    if (err) return res.sendStatus(403);
+    req.user = user;
+    next();
+  });
+}
 
 //Login de usuarios
 
 app.post('api/v1/users/login', async (req, res) => {
-
-  const user = await prisma.user.findOne({
+  const { email, password} = req.body;
+  const user = await prisma.user.findUnique({
     where: {
-      username: req.body.name
+      email
     }
   });
+
+  if (!user) {
+    return res.status(401).send('Credenciales inválidas');
+  }
+
   const valid = await bcrypt.compare(req.body.password, user.password);
 
   if (!valid) {
@@ -51,25 +66,15 @@ app.post('api/v1/users/login', async (req, res) => {
 
 //Crear canciones
 
-app.post("/api/v1/songs", async (req, res) => {
-  try {
-    const { name, artist, album, year, genre, duration, privacy } = req.body;
-
+app.post("/api/v1/songs", async (req: Request, res: Response) => {
+  const data = req.body;
+  try{
     const song = await prisma.song.create({
-      data: {
-        name,
-        artist,
-        album,
-        year,
-        genre,
-        duration,
-        privacy
-      },
+      data
     });
-
-    return res.json(song);
-  } catch (error) {
-    return res.status(500).json({ error: "Error" });
+    return res.json({ message: 'Musica creada' ,song});  
+  }catch (e) {
+    return res.status(500).json({ message: 'Error al crear la canción', e });
   }
 });
 
@@ -82,15 +87,15 @@ app.get("/songs", async (req, res) => {
 
 //Obtener canción por id
 
-app.get("/songs/:id", async (req, res) => {
-  const { id } = req.params;
-  const song = await prisma.song.findOne({
+app.get("/api/v1/songs/:id", async (req, res) => {
+  const { id } = req.body;
+  const song = await prisma.song.findUnique({
     where: {
-      id,
+      id
     },
   });
   if (!song) {
-    return res.status(404).json({ error: "Song not found" });
+    return res.status(404).json({ error: "Canción no encontrada" });
   }
   res.json(song);
 });
@@ -99,18 +104,14 @@ app.get("/songs/:id", async (req, res) => {
 //Creación de playlists
 
 app.post("/api/v1/playlists", async (req, res) => {
-  const { title, user_id } = req.body;
+  const {  name, user_id} = req.body;
   const playlist = await prisma.playlist.create({
     data: {
-      title,
-      user: {
-        connect: {
-          id: user_id,
-        },
-      },
+     name,
+     user: { connect: { id: user_id } },
     },
   });
-  res.json(playlist);
+  return res.json({ message: 'Playlist created successfully' ,playlist});  
 });
 
 //Agregar canción a la playlist deseada
@@ -119,24 +120,24 @@ app.post("api/v1/playlists/:id/songs", async (req, res) => {
   try {
     const { id } = req.params;
     const {songId} = req.body;
-    const playlist = await prisma.playlist.findOne({
+    const playlist = await prisma.playlist.findUnique({
       where: {
-        id,
+        id
       },
     });
 
     if (!playlist) {
-      return res.status(404).json({ error: "Playlist not found" });
+      return res.status(404).json({ error: "Playlist no encontrada" });
     }
 
     const song = await prisma.song.findOne({
       where: {
-        id:songId
+        id: songId
       },
     });
 
     if (!song) {
-      return res.status(404).json({ error: "Song not found" });
+      return res.status(404).json({ error: "Canción no encontrada" });
     }
 
     const playlistSong = await prisma.playlistSong.create({
