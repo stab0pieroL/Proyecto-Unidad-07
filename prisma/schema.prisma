@@ -28,6 +28,7 @@ model Playlist {
   user_id      Int
   playlistsong PlaylistSong[]
   song         Song[]
+  @@map("PlaylistS") 
 }
 
 model Song {
@@ -42,6 +43,7 @@ model Song {
   playlistId    Int
   privacy       Boolean        @default(false)
   playlistsongs PlaylistSong[]
+  @@map("Song") 
 }
 
 model PlaylistSong {

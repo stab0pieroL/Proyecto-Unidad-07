@@ -134,7 +134,7 @@ app.post("api/v1/playlists/:id/songs", async (req, res) => {
       return res.status(404).json({ error: "Playlist no encontrada" });
     }
 
-    const song = await prisma.song.findOne({
+    const song = await prisma.song.findUnique({
       where: {
         id: songId
       },
