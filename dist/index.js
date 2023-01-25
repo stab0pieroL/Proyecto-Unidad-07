@@ -21,7 +21,7 @@ const middleware_js_1 = require("./middleware.js");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const prisma = new client_1.PrismaClient();
-const port = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
 app.use(express_1.default.json());
 app.get("/", middleware_js_1.validateAuthorization, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const users = yield prisma.user.findMany();
@@ -30,7 +30,7 @@ app.get("/", middleware_js_1.validateAuthorization, (req, res) => __awaiter(void
 //creacion de usuario
 app.post('/api/v1/users/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const username = req.body.name;
-    const token = jsonwebtoken_1.default.sign({ name: username }, process.env.TOKEN_SECRET, {
+    const token = jsonwebtoken_1.default.sign({ name: username }, "0d166abf5c9cdf6eb17c2b225c0f4100f40f1df1766c17d817434a1283edd8d705a4135f7a429391e7ec54fffe4bcd86541dfaf5674e734bfb702ca68908507a", {
         expiresIn: "1800s",
     });
     res.status(201).json({ token: token });
@@ -40,7 +40,7 @@ function authenticateToken(req, res, next) {
     const token = authHeader && authHeader.split(" ")[1];
     if (token == null)
         return res.sendStatus(401);
-    jsonwebtoken_1.default.verify(token, process.env.TOKEN_SECRET, (err, user) => {
+    jsonwebtoken_1.default.verify(token, "0d166abf5c9cdf6eb17c2b225c0f4100f40f1df1766c17d817434a1283edd8d705a4135f7a429391e7ec54fffe4bcd86541dfaf5674e734bfb702ca68908507a", (err, user) => {
         if (err)
             return res.sendStatus(403);
         req.user = user;
@@ -146,6 +146,6 @@ app.post("api/v1/playlists/:id/songs", (req, res) => __awaiter(void 0, void 0, v
         return res.status(500).json({ error: "Error" });
     }
 }));
-app.listen(port, () => {
-    console.log(`El servidor se ejecuta en http://localhost:${port}`);
+app.listen(PORT, () => {
+    console.log(`El servidor se ejecuta en http://localhost:${PORT}`);
 });

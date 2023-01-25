@@ -5,10 +5,12 @@ import jwt from "jsonwebtoken";
 import bcrypt from 'bcrypt';
 import { validateAuthorization } from "./middleware.js";
 
+
 dotenv.config();
 const app: Express = express();
 const prisma = new PrismaClient()
-const port = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
+
 
 app.use(express.json());
 
@@ -23,7 +25,8 @@ app.get("/", validateAuthorization, async (req, res) => {
 app.post('/api/v1/users/', async (req, res) => {
 
   const username = req.body.name;
-  const token = jwt.sign({ name: username }, process.env.TOKEN_SECRET, {
+  const token = jwt.sign({ name: username }, "0d166abf5c9cdf6eb17c2b225c0f4100f40f1df1766c17d817434a1283edd8d705a4135f7a429391e7ec54fffe4bcd86541dfaf5674e734bfb702ca68908507a"
+  , {
     expiresIn: "1800s",
   });
   res.status(201).json({ token: token });
@@ -36,7 +39,8 @@ function authenticateToken(req: Request, res:Response, next:NextFunction) {
 
   if (token == null) return res.sendStatus(401);
 
-  jwt.verify(token, process.env.TOKEN_SECRET, (err, user) => {
+  jwt.verify(token, "0d166abf5c9cdf6eb17c2b225c0f4100f40f1df1766c17d817434a1283edd8d705a4135f7a429391e7ec54fffe4bcd86541dfaf5674e734bfb702ca68908507a"
+  , (err, user) => {
     if (err) return res.sendStatus(403);
     req.user = user;
     next();
@@ -162,6 +166,6 @@ app.post("api/v1/playlists/:id/songs", async (req, res) => {
 });
 
 
-app.listen(port, () => {
-  console.log(`El servidor se ejecuta en http://localhost:${port}`);
+app.listen(PORT, () => {
+  console.log(`El servidor se ejecuta en http://localhost:${PORT}`);
 })
